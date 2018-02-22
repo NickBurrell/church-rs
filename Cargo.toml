@@ -1,0 +1,7 @@
+[package]
+name = "church"
+version = "0.1.0"
+authors = ["nick"]
+
+[dependencies]
+nom = "^3.2.1"
