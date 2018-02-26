@@ -11,23 +11,23 @@ use super::utils::*;
 mod primatives {
     use super::*;
     use super::super::error::*;
-    fn add(v1: ChurchValue, v2: ChurchValue) -> Result<ChurchValue, ChurchEvalError> {
+    fn add<'a>(v1: ChurchValue, v2: ChurchValue) -> Result<ChurchValue, ChurchEvalError<'a>> {
         match v1 {
             ChurchValue::Number(x) => {
                 match v2 {
                     ChurchValue::Number(y) => {
                         Ok(ChurchValue::Number(x+y))
                     },
-                    _ => Err(ChurchEvalError::TypeError(String::from(""), String::from(""), Box::new(Vec::new())))
+                    _ => Err(ChurchEvalError::TypeError("", "", Box::new(Vec::new())))
 
                 }
             },
-            _ => Err(ChurchEvalError::TypeError(String::from(""), String::from(""), Box::new(Vec::new())))
+            _ => Err(ChurchEvalError::TypeError("", "", Box::new(Vec::new())))
 
 
         }
     }
-    static PRIMATIVES: Map<&'static str, Fn(ChurchValue, ChurchValue) -> Result<ChurchValue, ChurchEvalError> + Sync> = phf_map! {
+    static PRIMATIVES: Map<&'static str, fn(ChurchValue, ChurchValue) -> Result<ChurchValue, ChurchEvalError<'static>>> = phf_map! {
         "+" => add,
     };
 }

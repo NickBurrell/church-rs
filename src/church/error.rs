@@ -13,16 +13,16 @@ pub enum ChurchParseError {
 
 }
 #[derive(Debug)]
-pub enum ChurchEvalError {
-    FunctionNotFound(String, Box<Vec<String>>),
-    ArgumentError(String, String, Box<Vec<String>>),
-    TypeError(String, String, Box<Vec<String>>),
+pub enum ChurchEvalError<'a> {
+    FunctionNotFound(&'a str, Box<Vec<String>>),
+    ArgumentError(&'a str, &'a str, Box<Vec<String>>),
+    TypeError(&'a str, &'a str, Box<Vec<String>>),
 }
 
 #[derive(Debug)]
-pub enum ChurchError {
+pub enum ChurchError<'a> {
     ParseError(ChurchParseError),
-    EvalError(ChurchEvalError),
+    EvalError(ChurchEvalError<'a>),
 
 }
 
@@ -42,7 +42,7 @@ impl Display for ChurchParseError {
     }
 }
 
-impl Error for ChurchEvalError {
+impl<'a> Error for ChurchEvalError<'a> {
     fn description(&self) -> &str {
         match self {
             &ChurchEvalError::FunctionNotFound(_, _) => "Function Not Found",
@@ -52,7 +52,7 @@ impl Error for ChurchEvalError {
     }
 }
 
-impl Display for ChurchEvalError {
+impl<'a> Display for ChurchEvalError<'a> {
     fn fmt(&self, f: &mut Formatter) -> ::std::fmt::Result {
         match self {
             &ChurchEvalError::FunctionNotFound(ref fn_name, ref arg_list) => {
@@ -70,4 +70,4 @@ impl Display for ChurchEvalError {
     }
 }
 
-unsafe impl ::std::marker::Sync for ChurchEvalError {}
+unsafe impl<'a> ::std::marker::Sync for ChurchEvalError<'a> {}
