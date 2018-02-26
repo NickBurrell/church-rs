@@ -3,7 +3,7 @@ use nom::{digit, IResult, alphanumeric};
 use phf::{Map};
 
 use std::str::FromStr;
-use std::collections::HashMap;
+use std::clone::Clone;
 
 use super::error::*;
 use super::utils::*;
@@ -27,11 +27,12 @@ mod primatives {
 
         }
     }
-    static PRIMATIVES: Map<&'static str, fn(ChurchValue, ChurchValue) -> Result<ChurchValue, ChurchEvalError<'static>>> = phf_map! {
+    pub static PRIMATIVES: Map<&'static str, fn(ChurchValue, ChurchValue) -> Result<ChurchValue, ChurchEvalError<'static>>> = phf_map! {
         "+" => add,
     };
 }
 
+#[derive(Debug, Eq, PartialEq)]
 pub enum ChurchValue {
     Number(i16),
     Bool(bool),
@@ -93,6 +94,16 @@ impl ToString for ChurchValue {
     }
 }
 
+impl Clone for ChurchValue {
+    fn clone(&self) -> ChurchValue {
+        match self {
+            &ChurchValue::Number(val) => ChurchValue::Number(val),
+            &ChurchValue::Bool(val) => ChurchValue::Bool(val),
+            &ChurchValue::List(ref val) => ChurchValue::List(val.clone()),
+        }
+    }
+}
+
 named!(parse_number<&str, Result<ChurchValue, ChurchParseError>>,
        map!(digit, ChurchValue::parse_string_to_i16)
 );
@@ -138,3 +149,32 @@ pub fn eval(input: ChurchValue) -> ChurchValue {
     }
 }
 
+pub fn apply<'a>(fn_name: &'a str, args: Vec<ChurchValue>) -> Result<ChurchValue, ChurchEvalError<'a>> {
+    let function = self::primatives::PRIMATIVES.get(fn_name);
+    match function {
+        Some(fun) => {
+            let arg1 = args[0].clone();
+            let arg2 = args[1].clone();
+            let out = fun(arg1, arg2);
+            out
+        },
+        None => {
+            Err(ChurchEvalError::FunctionNotFound(fn_name))
+        }
+
+    }
+
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    fn test_apply() {
+
+        match apply("+", vec![ChurchValue::Number(2), ChurchValue::Number(2)]).unwrap() {
+            ChurchValue::Number(x) => println!("{}", x),
+            _ => println!("ERROR"),
+        }
+        assert_eq!(apply("+", vec![ChurchValue::Number(2), ChurchValue::Number(2)]).unwrap(), ChurchValue::Number(4));
+    }
+}

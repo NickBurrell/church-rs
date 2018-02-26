@@ -7,3 +7,4 @@ authors = ["nick"]
 nom = "^3.2.1"
 phf = "0.7.21"
 phf_macros = "0.7.21"
+quick-error = "1.2.1"
