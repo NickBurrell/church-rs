@@ -11,24 +11,109 @@ use super::utils::*;
 mod primatives {
     use super::*;
     use super::super::error::*;
-    fn add<'a>(v1: ChurchValue, v2: ChurchValue) -> Result<ChurchValue, ChurchEvalError<'a>> {
+    fn add(v1: ChurchValue, v2: ChurchValue) -> Result<ChurchValue, ChurchEvalError> {
         match v1 {
             ChurchValue::Number(x) => {
                 match v2 {
                     ChurchValue::Number(y) => {
                         Ok(ChurchValue::Number(x+y))
                     },
-                    _ => Err(ChurchEvalError::TypeError("", "", Box::new(Vec::new())))
+                    _ => Err(ChurchEvalError::TypeError(String::from("+"), String::from(""), String::from("")))
 
                 }
             },
-            _ => Err(ChurchEvalError::TypeError("", "", Box::new(Vec::new())))
+            _ => Err(ChurchEvalError::TypeError(String::from("+"), String::from(""), String::from("")))
 
 
         }
     }
-    pub static PRIMATIVES: Map<&'static str, fn(ChurchValue, ChurchValue) -> Result<ChurchValue, ChurchEvalError<'static>>> = phf_map! {
+    fn sub(v1: ChurchValue, v2: ChurchValue) -> Result<ChurchValue, ChurchEvalError> {
+        match v1 {
+            ChurchValue::Number(x) => {
+                match v2 {
+                    ChurchValue::Number(y) => {
+                        Ok(ChurchValue::Number(x-y))
+                    },
+                    _ => Err(ChurchEvalError::TypeError(String::from("-"), String::from(""), String::from("")))
+
+                }
+            },
+            _ => Err(ChurchEvalError::TypeError(String::from("-"), String::from(""), String::from("")))
+
+
+        }
+    }
+    fn mul(v1: ChurchValue, v2: ChurchValue) -> Result<ChurchValue, ChurchEvalError> {
+        match v1 {
+            ChurchValue::Number(x) => {
+                match v2 {
+                    ChurchValue::Number(y) => {
+                        Ok(ChurchValue::Number(x*y))
+                    },
+                    _ => Err(ChurchEvalError::TypeError(String::from("*"), String::from(""), String::from("")))
+
+                }
+            },
+            _ => Err(ChurchEvalError::TypeError(String::from("*"), String::from(""), String::from("")))
+
+
+        }
+    }
+    fn div(v1: ChurchValue, v2: ChurchValue) -> Result<ChurchValue, ChurchEvalError> {
+        match v1 {
+            ChurchValue::Number(x) => {
+                match v2 {
+                    ChurchValue::Number(y) => {
+                        Ok(ChurchValue::Number(x/y))
+                    },
+                    _ => Err(ChurchEvalError::TypeError(String::from("/"), String::from(""), String::from("")))
+
+                }
+            },
+            _ => Err(ChurchEvalError::TypeError(String::from("/"), String::from(""), String::from("")))
+
+
+        }
+    }
+    fn exp<'a>(v1: ChurchValue, v2: ChurchValue) -> Result<ChurchValue, ChurchEvalError> {
+        match v1 {
+            ChurchValue::Number(x) => {
+                match v2 {
+                    ChurchValue::Number(y) => {
+                        Ok(ChurchValue::Number(x.pow(y as u32)))
+                    },
+                    _ => Err(ChurchEvalError::TypeError(String::from("+"), String::from(""), String::from("")))
+
+                }
+            },
+            _ => Err(ChurchEvalError::TypeError(String::from("+"), String::from(""), String::from("")))
+
+
+        }
+    }
+    fn modu<'a>(v1: ChurchValue, v2: ChurchValue) -> Result<ChurchValue, ChurchEvalError> {
+        match v1 {
+            ChurchValue::Number(x) => {
+                match v2 {
+                    ChurchValue::Number(y) => {
+                        Ok(ChurchValue::Number(x%y))
+                    },
+                    _ => Err(ChurchEvalError::TypeError(String::from("+"), String::from(""), String::from("")))
+
+                }
+            },
+            _ => Err(ChurchEvalError::TypeError(String::from("+"), String::from(""), String::from("")))
+
+
+        }
+    }
+    pub static PRIMATIVES: Map<&'static str, fn(ChurchValue, ChurchValue) -> Result<ChurchValue, ChurchEvalError>> = phf_map! {
         "+" => add,
+        "-" => sub,
+        "*" => mul,
+        "/" => div,
+        "^" => exp,
+        "%" => modu,
     };
 }
 
@@ -149,7 +234,7 @@ pub fn eval(input: ChurchValue) -> ChurchValue {
     }
 }
 
-pub fn apply<'a>(fn_name: &'a str, args: Vec<ChurchValue>) -> Result<ChurchValue, ChurchEvalError<'a>> {
+pub fn apply(fn_name: &str, args: Vec<ChurchValue>) -> Result<ChurchValue, ChurchEvalError> {
     let function = self::primatives::PRIMATIVES.get(fn_name);
     match function {
         Some(fun) => {
@@ -159,7 +244,7 @@ pub fn apply<'a>(fn_name: &'a str, args: Vec<ChurchValue>) -> Result<ChurchValue
             out
         },
         None => {
-            Err(ChurchEvalError::FunctionNotFound(fn_name))
+            Err(ChurchEvalError::FunctionNotFound(fn_name.to_owned()))
         }
 
     }

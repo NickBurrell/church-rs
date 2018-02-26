@@ -2,6 +2,7 @@ use std::fmt::{Display, Formatter};
 use std::error::{Error};
 
 use super::utils::vec_to_string;
+use super::parser::ChurchValue;
 
 trait ChurchErrorTrait : Error{}
 
@@ -14,16 +15,9 @@ pub enum ChurchParseError {
 }
 
 #[derive(Debug)]
-pub enum ChurchEvalError<'a> {
-    FunctionNotFound(&'a str),
-    ArgumentError(&'a str, &'a str, Box<Vec<String>>),
-    TypeError(&'a str, &'a str, Box<Vec<String>>),
-}
-
-#[derive(Debug)]
-pub enum ChurchError<'a> {
+pub enum ChurchError {
     ParseError(ChurchParseError),
-    EvalError(ChurchEvalError<'a>),
+    EvalError(ChurchEvalError),
 
 }
 
@@ -43,32 +37,22 @@ impl Display for ChurchParseError {
     }
 }
 
-impl<'a> Error for ChurchEvalError<'a> {
-    fn description(&self) -> &str {
-        match self {
-            &ChurchEvalError::FunctionNotFound(_) => "Function Not Found",
-            &ChurchEvalError::ArgumentError(_, _, _) => "NYI",
-            &ChurchEvalError::TypeError(_, _, _) => "NYI",
+quick_error! {
+    #[derive(Debug)]
+    pub enum ChurchEvalError {
+        FunctionNotFound(fn_name: String) {
+            description("Function Not Found")
+            display("[!] Error: Function \"{}\" was not found.\n", &fn_name)
+        }
+        ArgumentError(fn_name: String, args: Box<Vec<ChurchValue>>) {
+            description("Argument Error")
+            display("[!] Error: Wrong arguments for function {}.\n\tRecieved: {}\n", &fn_name, vec_to_string(*args.clone()))
+        }
+        TypeError(fn_name: String, expected: String, actual: String) {
+            description("Wrong type")
+            display("[!] Error: Wrong type of argument for function {}.\n\tExpected: {}\n\tRecieved: {}", &fn_name, &expected, &actual)
         }
     }
 }
 
-impl<'a> Display for ChurchEvalError<'a> {
-    fn fmt(&self, f: &mut Formatter) -> ::std::fmt::Result {
-        match self {
-            &ChurchEvalError::FunctionNotFound(ref fn_name) => {
-                write!(f, "[!] Error: Function {} was not found", fn_name);
-            },
-            &ChurchEvalError::ArgumentError(_, _, _) => {
-                write!(f, "{}", self);
-            },
-            &ChurchEvalError::TypeError(_, _, _) => {
-                write!(f, "{}", self);
-            }
-
-        }
-        write!(f, "{}", self)
-    }
-}
-
-unsafe impl<'a> ::std::marker::Sync for ChurchEvalError<'a> {}
+unsafe impl ::std::marker::Sync for ChurchEvalError {}
