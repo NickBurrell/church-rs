@@ -1,6 +1,14 @@
+#![feature(const_fn)]
+
+#![feature(plugin)]
+#![plugin(phf_macros)]
+extern crate phf;
+
+#[allow(unused_imports)]
 #[macro_use]
 extern crate nom;
 
+mod church;
 use church::parser::read_expr;
 
 fn main() {

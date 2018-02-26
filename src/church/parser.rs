@@ -1,15 +1,36 @@
 use nom::{digit, IResult, alphanumeric};
 
-use std::fmt::{Display, Formatter};
-use std::error::{Error};
+use phf::{Map};
+
 use std::str::FromStr;
+use std::collections::HashMap;
 
-use self::error;
-
-//mod error;
 use super::error::*;
+use super::utils::*;
 
-trait ChurchErrorKind {}
+mod primatives {
+    use super::*;
+    use super::super::error::*;
+    fn add(v1: ChurchValue, v2: ChurchValue) -> Result<ChurchValue, ChurchEvalError> {
+        match v1 {
+            ChurchValue::Number(x) => {
+                match v2 {
+                    ChurchValue::Number(y) => {
+                        Ok(ChurchValue::Number(x+y))
+                    },
+                    _ => Err(ChurchEvalError::TypeError(String::from(""), String::from(""), Box::new(Vec::new())))
+
+                }
+            },
+            _ => Err(ChurchEvalError::TypeError(String::from(""), String::from(""), Box::new(Vec::new())))
+
+
+        }
+    }
+    static PRIMATIVES: Map<&'static str, Fn(ChurchValue, ChurchValue) -> Result<ChurchValue, ChurchEvalError> + Sync> = phf_map! {
+        "+" => add,
+    };
+}
 
 pub enum ChurchValue {
     Number(i16),
@@ -17,32 +38,26 @@ pub enum ChurchValue {
     List(Box<Vec<ChurchValue>>),
 }
 
-pub fn vec_ref_to_string<T: ToString>(v: &Vec<T>) -> String {
-    let mut out_str = String::from_str("").unwrap();
-    for i in 0..v.len() {
-        out_str.push_str(&v[i].to_string());
-        if i < v.len() - 1 {
-            out_str.push_str(", ");
-        }
-    }
-    out_str
+//type ChurchBinopFunc = Fn(ChurchValue, ChurchValue) -> Result<ChurchValue, ChurchEvalError> + 'static + Sync + Sized;
 
-}
-
+//const fn mk_church_binop<F: Sync>(f: F) -> ChurchBinopFunc
+//where F: Fn(ChurchValue, ChurchValue) -> Result<ChurchValue, ChurchEvalError> + 'static {
+//    Box::new(f) as ChurchBinopFunc
+//}
 
 impl ChurchValue {
     fn parse_string_to_bool(input: &str) -> Result<Self, ChurchParseError> {
         match input {
             "#t" => Ok(ChurchValue::Bool(true)),
             "#f" => Ok(ChurchValue::Bool(false)),
-            _   => Err(ChurchParseError::ChurchBoolParseError)
+            _   => Err(ChurchParseError::BoolParseError)
         }
     }
     fn parse_string_to_i16(input: &str) -> Result<Self, ChurchParseError> {
         let parsed_int = i16::from_str(input);
         match parsed_int {
             Ok(value) => Ok(ChurchValue::Number(value)),
-            Err(_) => Err(ChurchParseError::ChurchIntParseError),
+            Err(_) => Err(ChurchParseError::IntParseError),
         }
     }
     fn parse_vec_to_church_value<T: ToString>(v: Vec<T>) -> Result<ChurchValue, ChurchParseError> {
@@ -54,7 +69,7 @@ impl ChurchValue {
             let index = out_vec.len();
             match elem {
                 IResult::Done(_, val) => out_vec.insert(index, val.unwrap()),
-                _ => output_value = Err(ChurchParseError::ChurchListParseError),
+                _ => output_value = Err(ChurchParseError::ListParseError),
 
             };
         };
@@ -65,6 +80,9 @@ impl ChurchValue {
         output_value
     }
 }
+
+unsafe impl ::std::marker::Sync for ChurchValue {}
+
 impl ToString for ChurchValue {
     fn to_string(&self) -> String {
         match self {
@@ -83,10 +101,14 @@ named!(parse_bool<&str, Result<ChurchValue, ChurchParseError>>,
        map!(alt!(tag!("#t") | tag!("#f")), ChurchValue::parse_string_to_bool)
 );
 
+named!(alphanumeric_or_bool<&str, &str>,
+       alt!(alphanumeric | alt!(tag!("#t") | tag!("#f")))
+);
+
 named!(parse_list<&str, Result<ChurchValue, ChurchParseError>>,
        do_parse!(
            begin: tag!("(") >>
-           output: separated_list!(tag!(","), alphanumeric) >>
+           output: separated_list!(tag!(","), alphanumeric_or_bool) >>
            end: tag!(")") >>
            (ChurchValue::parse_vec_to_church_value(output))
        )
