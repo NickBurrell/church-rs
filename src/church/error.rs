@@ -11,6 +11,7 @@ pub enum ChurchParseError {
     IntParseError,
     BoolParseError,
     ListParseError,
+    ParseError,
 
 }
 
@@ -27,6 +28,7 @@ impl Error for ChurchParseError {
             &ChurchParseError::IntParseError => "Failed to parse value into integer",
             &ChurchParseError::BoolParseError => "Failed to parse value into boolean",
             &ChurchParseError::ListParseError => "Failed to parse values into list",
+            &ChurchParseError::ParseError => "Failed to parse value or values",
         }
     }
 }
@@ -46,7 +48,7 @@ quick_error! {
         }
         ArgumentError(fn_name: String, args: Box<Vec<ChurchValue>>) {
             description("Argument Error")
-            display("[!] Error: Wrong arguments for function {}.\n\tRecieved: {}\n", &fn_name, vec_to_string(*args.clone()))
+            display("[!] Error: Wrong arguments for function {}.\n\tRecieved: {}\n", &fn_name, vec_to_string(*args.clone(), ", "))
         }
         TypeError(fn_name: String, expected: String, actual: String) {
             description("Wrong type")

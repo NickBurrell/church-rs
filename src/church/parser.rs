@@ -1,4 +1,4 @@
-use nom::{digit, IResult, alphanumeric};
+use nom::{digit, IResult, alphanumeric, is_space};
 
 use phf::{Map};
 
@@ -7,6 +7,7 @@ use std::clone::Clone;
 
 use super::error::*;
 use super::utils::*;
+
 
 mod primatives {
     use super::*;
@@ -19,12 +20,9 @@ mod primatives {
                         Ok(ChurchValue::Number(x+y))
                     },
                     _ => Err(ChurchEvalError::TypeError(String::from("+"), String::from(""), String::from("")))
-
                 }
             },
             _ => Err(ChurchEvalError::TypeError(String::from("+"), String::from(""), String::from("")))
-
-
         }
     }
     fn sub(v1: ChurchValue, v2: ChurchValue) -> Result<ChurchValue, ChurchEvalError> {
@@ -35,12 +33,9 @@ mod primatives {
                         Ok(ChurchValue::Number(x-y))
                     },
                     _ => Err(ChurchEvalError::TypeError(String::from("-"), String::from(""), String::from("")))
-
                 }
             },
             _ => Err(ChurchEvalError::TypeError(String::from("-"), String::from(""), String::from("")))
-
-
         }
     }
     fn mul(v1: ChurchValue, v2: ChurchValue) -> Result<ChurchValue, ChurchEvalError> {
@@ -51,12 +46,9 @@ mod primatives {
                         Ok(ChurchValue::Number(x*y))
                     },
                     _ => Err(ChurchEvalError::TypeError(String::from("*"), String::from(""), String::from("")))
-
                 }
             },
             _ => Err(ChurchEvalError::TypeError(String::from("*"), String::from(""), String::from("")))
-
-
         }
     }
     fn div(v1: ChurchValue, v2: ChurchValue) -> Result<ChurchValue, ChurchEvalError> {
@@ -67,12 +59,9 @@ mod primatives {
                         Ok(ChurchValue::Number(x/y))
                     },
                     _ => Err(ChurchEvalError::TypeError(String::from("/"), String::from(""), String::from("")))
-
                 }
             },
             _ => Err(ChurchEvalError::TypeError(String::from("/"), String::from(""), String::from("")))
-
-
         }
     }
     fn exp<'a>(v1: ChurchValue, v2: ChurchValue) -> Result<ChurchValue, ChurchEvalError> {
@@ -83,12 +72,9 @@ mod primatives {
                         Ok(ChurchValue::Number(x.pow(y as u32)))
                     },
                     _ => Err(ChurchEvalError::TypeError(String::from("+"), String::from(""), String::from("")))
-
                 }
             },
             _ => Err(ChurchEvalError::TypeError(String::from("+"), String::from(""), String::from("")))
-
-
         }
     }
     fn modu<'a>(v1: ChurchValue, v2: ChurchValue) -> Result<ChurchValue, ChurchEvalError> {
@@ -99,12 +85,9 @@ mod primatives {
                         Ok(ChurchValue::Number(x%y))
                     },
                     _ => Err(ChurchEvalError::TypeError(String::from("+"), String::from(""), String::from("")))
-
                 }
             },
             _ => Err(ChurchEvalError::TypeError(String::from("+"), String::from(""), String::from("")))
-
-
         }
     }
     pub static PRIMATIVES: Map<&'static str, fn(ChurchValue, ChurchValue) -> Result<ChurchValue, ChurchEvalError>> = phf_map! {
@@ -122,6 +105,7 @@ pub enum ChurchValue {
     Number(i16),
     Bool(bool),
     List(Box<Vec<ChurchValue>>),
+    Func(String, Box<Vec<ChurchValue>>),
 }
 
 //type ChurchBinopFunc = Fn(ChurchValue, ChurchValue) -> Result<ChurchValue, ChurchEvalError> + 'static + Sync + Sized;
@@ -165,6 +149,31 @@ impl ChurchValue {
         }
         output_value
     }
+    fn parse_function_application_to_church_value(fn_name: &str, args: Vec<&str>) -> Result<ChurchValue, ChurchParseError> {
+        let mut arg_list: Vec<ChurchValue> = Vec::new();
+
+        let mut break_for_inner_error: bool = false;
+
+        for arg in args {
+
+            let temp_val = church_parse(arg);
+
+            match temp_val {
+                IResult::Done(_, _val) => {
+                    match _val {
+                        Ok(val) => {
+                            arg_list.push(val);
+                        },
+                        Err(err) => {
+                            return Err(err);
+                        },
+                    }
+                },
+                _ => {}
+            }
+        }
+        Ok(ChurchValue::Func(fn_name.to_string(), Box::new(arg_list)))
+    }
 }
 
 unsafe impl ::std::marker::Sync for ChurchValue {}
@@ -174,7 +183,12 @@ impl ToString for ChurchValue {
         match self {
             &ChurchValue::Number(out) => out.to_string(),
             &ChurchValue::Bool(out) => out.to_string(),
-            &ChurchValue::List(ref out) => vec_ref_to_string(&*out),
+            &ChurchValue::List(ref out) => vec_ref_to_string(&*out, ", "),
+            &ChurchValue::Func(ref fn_name, ref args) => {
+                let mut out_str = fn_name.clone();
+                out_str.push_str(vec_ref_to_string(args, " ").as_str());
+                out_str
+            }
         }
     }
 }
@@ -185,6 +199,7 @@ impl Clone for ChurchValue {
             &ChurchValue::Number(val) => ChurchValue::Number(val),
             &ChurchValue::Bool(val) => ChurchValue::Bool(val),
             &ChurchValue::List(ref val) => ChurchValue::List(val.clone()),
+            &ChurchValue::Func(ref fn_name, ref args) => ChurchValue::Func(fn_name.to_owned(), args.clone()),
         }
     }
 }
@@ -214,23 +229,39 @@ named!(church_symbol<&str, char>,
        one_of!("!#$%&|*=-/:<=>?@^_~")
 );
 
-named!(church_parse<&str, Result<ChurchValue, ChurchParseError>>,
-       alt!(alt!(complete!(parse_bool) | complete!(parse_number)) | complete!(parse_list))
+named!(church_primatives<&str, char>,
+       one_of!("+-*/^%")
 );
 
-pub fn read_expr(input: &str) -> String {
+
+named!(church_parse_fn<&str, Result<ChurchValue, ChurchParseError>>,
+       do_parse!(
+           function_name: take_until!(" ")>>
+               args: separated_list!(tag!(" "), alphanumeric_or_bool) >>
+               (ChurchValue::parse_function_application_to_church_value(function_name, args))
+       )
+);
+
+named!(church_parse<&str, Result<ChurchValue, ChurchParseError>>,
+       alt!(church_parse_fn | alt!(alt!(complete!(parse_bool) | complete!(parse_number)) | complete!(parse_list)))
+);
+
+pub fn read_expr(input: &str) -> Result<ChurchValue, ChurchParseError> {
     match church_parse(input) {
-        IResult::Done(_, out) => out.unwrap().to_string(),
-        IResult::Error(_) => String::from("ERROR"),
-        _ => String::from("ERROR"),
+        IResult::Done(_, out) => Ok(out.unwrap()),
+        IResult::Error(_) => Err(ChurchParseError::ParseError),
+        _ => Err(ChurchParseError::ParseError),
     }
 }
 
-pub fn eval(input: ChurchValue) -> ChurchValue {
+pub fn eval(input: ChurchValue) -> Result<ChurchValue, ChurchEvalError> {
     match input {
-        ChurchValue::List(data) => ChurchValue::List(data),
-        ChurchValue::Bool(data) => ChurchValue::Bool(data),
-        ChurchValue::Number(data) => ChurchValue::Number(data),
+        ChurchValue::List(data) => Ok(ChurchValue::List(data)),
+        ChurchValue::Bool(data) => Ok(ChurchValue::Bool(data)),
+        ChurchValue::Number(data) => Ok(ChurchValue::Number(data)),
+        ChurchValue::Func(fn_name, args) => {
+            apply(&fn_name, *args)
+        }
     }
 }
 
@@ -238,6 +269,9 @@ pub fn apply(fn_name: &str, args: Vec<ChurchValue>) -> Result<ChurchValue, Churc
     let function = self::primatives::PRIMATIVES.get(fn_name);
     match function {
         Some(fun) => {
+            if args.len() < 2 {
+                return Err(ChurchEvalError::ArgumentError(fn_name.to_owned(), Box::new(args)))
+            }
             let arg1 = args[0].clone();
             let arg2 = args[1].clone();
             let out = fun(arg1, arg2);
