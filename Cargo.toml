@@ -13,7 +13,7 @@ quick-error = "1.2.1"
 
 
 # Optional dependancies
-lazy_static = {"1.0.0", optional = true}
-phf = {"0.7.21", optional = true}
-phf_macros = {"0.7.21", optional = true}
+lazy_static = {version = "1.0.0", optional = true}
+phf = {version = "0.7.21", optional = true}
+phf_macros = {version = "0.7.21", optional = true}
 
