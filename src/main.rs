@@ -12,6 +12,8 @@ extern crate nom;
 #[macro_use]
 extern crate quick_error;
 
+use std::collections::HashMap;
+
 mod church;
 use church::parser::read_expr;
 use church::parser::*;
@@ -25,5 +27,6 @@ fn main() {
 }*/
     std::io::stdin().read_line(&mut input).ok().expect("FAILED");
     let res = read_expr(&input);
-    println!("{}", Evaluator::eval_statement(res.unwrap()).unwrap().to_string());
+    let mut church_evaluator = Evaluator::new(HashMap::new(), HashMap::new());
+    println!("{}", church_evaluator.eval(res.unwrap()).unwrap().to_string());
 }

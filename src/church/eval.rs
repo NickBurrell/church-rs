@@ -104,6 +104,10 @@ pub struct Evaluator {
 
 impl Evaluator {
 
+    pub fn new(vars: HashMap<String, ChurchValue>, funcs: HashMap<String, ChurchValue>) -> Evaluator {
+        Evaluator {vars: vars, func: funcs}
+    }
+
     pub fn eval(&self, input: ChurchValue) -> Result<ChurchValue, ChurchEvalError> {
         match input {
             ChurchValue::List(data) => Ok(ChurchValue::List(data)),
