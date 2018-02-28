@@ -43,7 +43,7 @@ $ cargo build
 
 ### Building Documentation
 ```bash
-	$ cargo doc
+$ cargo doc
 ```
 ## License
 This project is licensed under Mozilla Public License 2.0 ([LICENSE])
