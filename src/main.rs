@@ -15,6 +15,7 @@ extern crate quick_error;
 mod church;
 use church::parser::read_expr;
 use church::parser::*;
+use church::eval::*;
 
 fn main() {
     let mut input = String::new();
@@ -24,5 +25,5 @@ fn main() {
 }*/
     std::io::stdin().read_line(&mut input).ok().expect("FAILED");
     let res = read_expr(&input);
-    println!("{}", eval(res.unwrap()).unwrap().to_string());
+    println!("{}", Evaluator::eval_statement(res.unwrap()).unwrap().to_string());
 }

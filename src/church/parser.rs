@@ -1,104 +1,18 @@
 use nom::{digit, IResult, alphanumeric, is_alphanumeric};
 
-use phf::{Map};
-
 use std::str::FromStr;
 use std::clone::Clone;
 
 use super::error::*;
 use super::utils::*;
+use super::eval::*;
 
+//type ChurchBinopFunc = Fn(ChurchValue, ChurchValue) -> Result<ChurchValue, ChurchEvalError> + 'static + Sync + Sized;
 
-mod primatives {
-    use super::*;
-    use super::super::error::*;
-    fn add(v1: ChurchValue, v2: ChurchValue) -> Result<ChurchValue, ChurchEvalError> {
-        match v1 {
-            ChurchValue::Number(x) => {
-                match v2 {
-                    ChurchValue::Number(y) => {
-                        Ok(ChurchValue::Number(x+y))
-                    },
-                    _ => Err(ChurchEvalError::TypeError(String::from("+"), String::from(""), String::from("")))
-                }
-            },
-            _ => Err(ChurchEvalError::TypeError(String::from("+"), String::from(""), String::from("")))
-        }
-    }
-    fn sub(v1: ChurchValue, v2: ChurchValue) -> Result<ChurchValue, ChurchEvalError> {
-        match v1 {
-            ChurchValue::Number(x) => {
-                match v2 {
-                    ChurchValue::Number(y) => {
-                        Ok(ChurchValue::Number(x-y))
-                    },
-                    _ => Err(ChurchEvalError::TypeError(String::from("-"), String::from(""), String::from("")))
-                }
-            },
-            _ => Err(ChurchEvalError::TypeError(String::from("-"), String::from(""), String::from("")))
-        }
-    }
-    fn mul(v1: ChurchValue, v2: ChurchValue) -> Result<ChurchValue, ChurchEvalError> {
-        match v1 {
-            ChurchValue::Number(x) => {
-                match v2 {
-                    ChurchValue::Number(y) => {
-                        Ok(ChurchValue::Number(x*y))
-                    },
-                    _ => Err(ChurchEvalError::TypeError(String::from("*"), String::from(""), String::from("")))
-                }
-            },
-            _ => Err(ChurchEvalError::TypeError(String::from("*"), String::from(""), String::from("")))
-        }
-    }
-    fn div(v1: ChurchValue, v2: ChurchValue) -> Result<ChurchValue, ChurchEvalError> {
-        match v1 {
-            ChurchValue::Number(x) => {
-                match v2 {
-                    ChurchValue::Number(y) => {
-                        Ok(ChurchValue::Number(x/y))
-                    },
-                    _ => Err(ChurchEvalError::TypeError(String::from("/"), String::from(""), String::from("")))
-                }
-            },
-            _ => Err(ChurchEvalError::TypeError(String::from("/"), String::from(""), String::from("")))
-        }
-    }
-    fn exp<'a>(v1: ChurchValue, v2: ChurchValue) -> Result<ChurchValue, ChurchEvalError> {
-        match v1 {
-            ChurchValue::Number(x) => {
-                match v2 {
-                    ChurchValue::Number(y) => {
-                        Ok(ChurchValue::Number(x.pow(y as u32)))
-                    },
-                    _ => Err(ChurchEvalError::TypeError(String::from("+"), String::from(""), String::from("")))
-                }
-            },
-            _ => Err(ChurchEvalError::TypeError(String::from("+"), String::from(""), String::from("")))
-        }
-    }
-    fn modu<'a>(v1: ChurchValue, v2: ChurchValue) -> Result<ChurchValue, ChurchEvalError> {
-        match v1 {
-            ChurchValue::Number(x) => {
-                match v2 {
-                    ChurchValue::Number(y) => {
-                        Ok(ChurchValue::Number(x%y))
-                    },
-                    _ => Err(ChurchEvalError::TypeError(String::from("+"), String::from(""), String::from("")))
-                }
-            },
-            _ => Err(ChurchEvalError::TypeError(String::from("+"), String::from(""), String::from("")))
-        }
-    }
-    pub static PRIMATIVES: Map<&'static str, fn(ChurchValue, ChurchValue) -> Result<ChurchValue, ChurchEvalError>> = phf_map! {
-        "+" => add,
-        "-" => sub,
-        "*" => mul,
-        "/" => div,
-        "^" => exp,
-        "%" => modu,
-    };
-}
+//const fn mk_church_binop<F: Sync>(f: F) -> ChurchBinopFunc
+//where F: Fn(ChurchValue, ChurchValue) -> Result<ChurchValue, ChurchEvalError> + 'static {
+//    Box::new(f) as ChurchBinopFunc
+//}
 
 #[derive(Debug, Eq, PartialEq)]
 pub enum ChurchValue {
@@ -107,13 +21,6 @@ pub enum ChurchValue {
     List(Box<Vec<ChurchValue>>),
     Func(String, Box<Vec<ChurchValue>>),
 }
-
-//type ChurchBinopFunc = Fn(ChurchValue, ChurchValue) -> Result<ChurchValue, ChurchEvalError> + 'static + Sync + Sized;
-
-//const fn mk_church_binop<F: Sync>(f: F) -> ChurchBinopFunc
-//where F: Fn(ChurchValue, ChurchValue) -> Result<ChurchValue, ChurchEvalError> + 'static {
-//    Box::new(f) as ChurchBinopFunc
-//}
 
 impl ChurchValue {
     fn parse_string_to_bool(input: &str) -> Result<Self, ChurchParseError> {
@@ -160,7 +67,7 @@ impl ChurchValue {
         for arg in args {
 
             let temp_val = match church_parse(arg) {
-                IResult::Done(_, value) => Ok(eval(value.unwrap())),
+                IResult::Done(_, value) => Ok(Evaluator::eval_statement(value.unwrap())),
                 _ => Err(ChurchParseError::ParseError),
             };
 
@@ -264,49 +171,5 @@ pub fn read_expr(input: &str) -> Result<ChurchValue, ChurchParseError> {
         IResult::Done(_, out) => Ok(out.unwrap()),
         IResult::Error(_) => Err(ChurchParseError::ParseError),
         _ => Err(ChurchParseError::ParseError),
-    }
-}
-
-pub fn eval(input: ChurchValue) -> Result<ChurchValue, ChurchEvalError> {
-    match input {
-        ChurchValue::List(data) => Ok(ChurchValue::List(data)),
-        ChurchValue::Bool(data) => Ok(ChurchValue::Bool(data)),
-        ChurchValue::Number(data) => Ok(ChurchValue::Number(data)),
-        ChurchValue::Func(fn_name, args) => {
-            apply(&fn_name, *args)
-        }
-    }
-}
-
-pub fn apply(fn_name: &str, args: Vec<ChurchValue>) -> Result<ChurchValue, ChurchEvalError> {
-    let function = self::primatives::PRIMATIVES.get(fn_name);
-    match function {
-        Some(fun) => {
-            if args.len() < 2 {
-                return Err(ChurchEvalError::ArgumentError(fn_name.to_owned(), Box::new(args)))
-            }
-            let arg1 = args[0].clone();
-            let arg2 = args[1].clone();
-            let out = fun(arg1, arg2);
-            out
-        },
-        None => {
-            Err(ChurchEvalError::FunctionNotFound(fn_name.to_owned()))
-        }
-
-    }
-
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    fn test_apply() {
-
-        match apply("+", vec![ChurchValue::Number(2), ChurchValue::Number(2)]).unwrap() {
-            ChurchValue::Number(x) => println!("{}", x),
-            _ => println!("ERROR"),
-        }
-        assert_eq!(apply("+", vec![ChurchValue::Number(2), ChurchValue::Number(2)]).unwrap(), ChurchValue::Number(4));
     }
 }
