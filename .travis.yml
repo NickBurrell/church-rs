@@ -9,4 +9,4 @@ matrix:
     - rust: beta
 
 script:
-  - cargo build --feature=nightly
+  - cargo build --feature="nightly"
