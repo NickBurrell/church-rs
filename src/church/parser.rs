@@ -90,6 +90,7 @@ mod primatives {
             _ => Err(ChurchEvalError::TypeError(String::from("+"), String::from(""), String::from("")))
         }
     }
+    #[cfg(feature = "nightly")]
     pub static PRIMATIVES: Map<&'static str, fn(ChurchValue, ChurchValue) -> Result<ChurchValue, ChurchEvalError>> = phf_map! {
         "+" => add,
         "-" => sub,
