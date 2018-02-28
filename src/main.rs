@@ -24,5 +24,5 @@ fn main() {
 }*/
     std::io::stdin().read_line(&mut input).ok().expect("FAILED");
     let res = read_expr(&input);
-    println!("{}\n\n\n", eval(res.unwrap()).unwrap().to_string());
+    println!("{}", eval(res.unwrap()).unwrap().to_string());
 }
