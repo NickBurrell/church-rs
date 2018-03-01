@@ -2,7 +2,7 @@ use std::fmt::{Display, Formatter};
 use std::error::{Error};
 
 use super::utils::vec_to_string;
-use super::parser::ChurchValue;
+use super::primatives::ChurchValue;
 
 trait ChurchErrorTrait : Error{}
 

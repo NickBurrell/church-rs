@@ -1,8 +1,14 @@
-#![feature(const_fn)]
-
 #![feature(plugin)]
-#![plugin(phf_macros)]
+#![feature(rustc_private)]
+#[cfg(features = "nightly")]
+#[plugin(phf_macros)]
+#[cfg(features = "nightly")]
 extern crate phf;
+
+#[cfg(not(features = "nightly"))]
+#[macro_use]
+#[cfg(not(features = "nightly"))]
+extern crate lazy_static;
 
 #[allow(unused_imports)]
 #[macro_use]
@@ -27,6 +33,6 @@ fn main() {
 }*/
     std::io::stdin().read_line(&mut input).ok().expect("FAILED");
     let res = read_expr(&input);
-    let mut church_evaluator = Evaluator::new(HashMap::new(), HashMap::new());
-    println!("{}", church_evaluator.eval(res.unwrap()).unwrap().to_string());
+    let mut church_evaluator = Environment::new(HashMap::new(), HashMap::new());
+    println!("{}", eval(&mut church_evaluator, res.unwrap()).unwrap().to_string());
 }

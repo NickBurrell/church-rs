@@ -3,8 +3,17 @@ name = "church"
 version = "0.1.0"
 authors = ["nick"]
 
+[features]
+stable = ["lazy_static"]
+nightly = ["phf", "phf_macros"]
+
 [dependencies]
 nom = "^3.2.1"
-phf = "0.7.21"
-phf_macros = "0.7.21"
 quick-error = "1.2.1"
+
+
+# Optional dependancies
+lazy_static = {version = "0.2.11", optional = true}
+phf = {version = "0.7.21", optional = true}
+phf_macros = {version = "0.7.21", optional = true}
+

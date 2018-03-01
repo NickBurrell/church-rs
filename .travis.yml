@@ -1,0 +1,17 @@
+language: rust
+rust:
+  - stable
+  - beta
+  - nightly
+matrix:
+  allow_failures:
+    - rust: stable
+    - rust: beta
+
+script:
+- |
+    if [ "($rustc --version | grep "nightly" -o)" == "nightly" ]; then
+       cargo build --features="nightly"
+   else
+       cargo build
+   fi

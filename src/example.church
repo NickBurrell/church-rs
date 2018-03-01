@@ -1,0 +1,14 @@
+; Single Line Comment
+; No Multi Line Comment
+
+
+add = \x.\y.x+y
+\x.\y.sub.x-y
+
+io::out add 3 4
+
+do_stuff = (
+     as Number io::getLn >>= x >>
+     y = x+2 >> ; maybe y = \x.x+2 x ? unsure
+     ^ x y >>= io::putLn ; Once infix is enabled, io::out x ^ y
+)

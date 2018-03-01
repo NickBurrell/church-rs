@@ -1,0 +1,19 @@
+#+TAGS: refactor addition feature
+* Restructure code
+** Primatives module                                              :refactor:
+*** Contains primative::types and primative::functions
+** TODO Rename ChurchValue to ChurchPrimative                    :refactor:
+   DEADLINE: <2018-03-01 Thu>
+** TODO Rename ChurchBinopFunc to ChurchPrimative
+*** TODO Remove function type from primative?
+** TODO Rename/repurpose Evaluator object to Environment 
+*** TODO Fix apply(...) and eval(...) to take a mutable reference to the environment
+
+
+* Refactor Checklist
+  - [ ] Create Primatives module
+  - [ ] Refactor existing code
+    - [ ] Refactor parsers to break up by `statment`
+    - [ ] Rename Enums and Structs
+  - [ ] Fix apply(...) and eval(...) to take in environment
+
