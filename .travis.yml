@@ -13,5 +13,5 @@ script:
       if [ "($rustc --version | grep "nightly" -o)" == "nightly" ]; then
           cargo build --features="nightly"
        else
-       cargo build
+      cargo build --features="stable"
       fi

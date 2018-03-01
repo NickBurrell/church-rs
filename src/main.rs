@@ -1,14 +1,15 @@
-#![feature(plugin)]
-#![feature(rustc_private)]
+#![cfg_attr(features = "nightly", feature(plugin))]
+#![cfg_attr(features = "nightly", feature(rustc_private))]
+//#![feature(plugin)]
+//#![feature(plugin)]
+//#![feature(rustc_private)]
 #[cfg(features = "nightly")]
 #[plugin(phf_macros)]
 #[cfg(features = "nightly")]
 extern crate phf;
 
 #[cfg(not(features = "nightly"))]
-#[macro_use]
-#[cfg(not(features = "nightly"))]
-extern crate lazy_static;
+#[macro_use] extern crate lazy_static;
 
 #[allow(unused_imports)]
 #[macro_use]

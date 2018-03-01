@@ -3,7 +3,9 @@ use std::clone::Clone;
 
 use super::error::*;
 use super::utils::*;
+use super::primatives::{ChurchValue};
 
+ 
 #[derive(Debug, Eq, PartialEq)]
 pub enum Op {
     Plus,
@@ -27,5 +29,5 @@ pub enum Token<'a> {
     Comma,
     Colon,
     Operator(Op),
-    Value,
+    Value(Box<ChurchValue>),
 }
