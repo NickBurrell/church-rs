@@ -8,10 +8,10 @@ matrix:
     - rust: stable
     - rust: beta
 
-script:
-    - |
-      if [ "($rustc --version | grep "nightly" -o)" == "nightly" ]; then
-          cargo build --features="nightly"
-       else
-      cargo build --features="stable"
-      fi
+#script:
+#    - |
+#      if [ "($rustc --version | grep "nightly" -o)" == "nightly" ]; then
+#          cargo build --features="nightly"
+#       else
+#      cargo build --features="stable"
+#      fi
