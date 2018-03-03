@@ -1,14 +1,3 @@
-#![cfg_attr(features = "nightly", feature(plugin))]
-#![cfg_attr(features = "nightly", feature(rustc_private))]
-//#![feature(plugin)]
-//#![feature(plugin)]
-//#![feature(rustc_private)]
-#[cfg(features = "nightly")]
-#[plugin(phf_macros)]
-#[cfg(features = "nightly")]
-extern crate phf;
-
-#[cfg(not(features = "nightly"))]
 #[macro_use] extern crate lazy_static;
 
 #[allow(unused_imports)]
@@ -23,7 +12,6 @@ use std::collections::HashMap;
 
 mod church;
 use church::parser::read_expr;
-use church::parser::*;
 use church::eval::*;
 
 fn main() {

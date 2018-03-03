@@ -1,17 +1,11 @@
-#[cfg(features = "nightly")]
-use phf::{Map};
-
 use std::collections::HashMap;
 
 use super::error::*;
-use super::utils::*;
-use super::parser::*;
 use super::primatives::*;
 
 
 pub mod operators {
     use super::*;
-    use super::super::error::*;
     fn add(v1: ChurchValue, v2: ChurchValue) -> Result<ChurchValue, ChurchEvalError> {
         match v1 {
             ChurchValue::Number(x) => {
@@ -90,17 +84,6 @@ pub mod operators {
             _ => Err(ChurchEvalError::TypeError(String::from("+"), String::from(""), String::from("")))
         }
     }
-    #[cfg(features = "nightly")]
-    pub static OPERATORS: Map<&'static str, fn(ChurchValue, ChurchValue) -> Result<ChurchValue, ChurchEvalError>> = phf_map! {
-        "+" => add,
-        "-" => sub,
-        "*" => mul,
-        "/" => div,
-        "^" => exp,
-        "%" => modu,
-    };
-
-    #[cfg(not(features = "nightly"))]
     lazy_static! {
         pub static ref OPERATORS: HashMap<&'static str, fn(ChurchValue, ChurchValue) -> Result<ChurchValue, ChurchEvalError>> = {
             let mut map : HashMap<&'static str, fn(ChurchValue, ChurchValue) -> Result<ChurchValue, ChurchEvalError>> = HashMap::new();

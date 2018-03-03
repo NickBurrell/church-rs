@@ -1,5 +1,3 @@
-use nom::{digit, IResult, alphanumeric, is_alphanumeric};
-
 use std::str::FromStr;
 use std::clone::Clone;
 

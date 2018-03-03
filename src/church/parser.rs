@@ -1,13 +1,9 @@
 use nom::{digit, IResult, alphanumeric, is_alphanumeric};
 
-use std::str::FromStr;
 use std::clone::Clone;
 
 use super::error::*;
-use super::utils::*;
-use super::eval::*;
 use super::primatives::*;
-use super::tokens::*;
 
 //type ChurchBinopFunc = Fn(ChurchValue, ChurchValue) -> Result<ChurchValue, ChurchEvalError> + 'static + Sync + Sized;
 
@@ -35,10 +31,6 @@ named!(parse_bool<&str, Result<ChurchValue, ChurchParseError>>,
 
 named!(alphanumeric_or_bool<&str, &str>,
        alt!(alphanumeric | alt!(tag!("#t") | tag!("#f")))
-);
-
-named!(church_symbol<&str, char>,
-       one_of!("!#$%&|*=-/:<=>?@^_~")
 );
 
 named!(church_primatives<&str, char>,
