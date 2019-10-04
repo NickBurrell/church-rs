@@ -3,7 +3,16 @@ name = "church"
 version = "0.1.0"
 authors = ["nick"]
 
+[lib]
+name = "church"
+path = "src/lib.rs"
+
+[[bin]]
+name = "church-repl"
+path = "src/repl.rs"
+
 [dependencies]
-nom = "^3.2.1"
-quick-error = "1.2.1"
-lazy_static = {version = "0.2.11", optional = false}
+nom = "5.0.1"
+quick-error = "1.2.2"
+lazy_static = {version = "1.4.0", optional = false}
+memchr = "2.2.1"
